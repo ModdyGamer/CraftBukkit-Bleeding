@@ -369,6 +369,8 @@ public class CraftEventFactory {
             event = new EntityDamageEvent(damagee.getBukkitEntity(), cause, damage);
         }
 
+        event.setCancelled(damagee instanceof EntityHuman && damage == 0);
+
         callEvent(event);
 
         if (!event.isCancelled()) {
