@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.bukkit.craftbukkit.inventory.CraftItemStack; // CraftBukkit
+
 public abstract class Packet {
 
     public static IntHashMap l = new IntHashMap();
@@ -205,6 +207,13 @@ public abstract class Packet {
 
             itemstack = new ItemStack(short1, b0, short2);
             itemstack.tag = d(datainputstream);
+
+            // CraftBukkit start - filter data using item meta system
+            if (itemstack.tag != null) {
+                CraftItemStack craftStack = CraftItemStack.asCraftMirror(itemstack);
+                craftStack.setItemMeta(craftStack.getItemMeta());
+            }
+            // CraftBukkit end
         }
 
         return itemstack;
