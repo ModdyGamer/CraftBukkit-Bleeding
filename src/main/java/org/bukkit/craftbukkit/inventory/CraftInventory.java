@@ -94,7 +94,7 @@ public class CraftInventory implements Inventory {
         if (items == null) {
             items = new ItemStack[0];
         }
-        Validate.isTrue(items.length < getSize(), "Invalid inventory size; expected "+getSize()+" or less.");
+        Validate.isTrue(items.length <= getSize(), "Invalid inventory size; expected " + getSize() + " or less.");
 
         int inventoryOffset = 0;
         for (IInventory inventory : getInventories()) {
@@ -103,7 +103,7 @@ public class CraftInventory implements Inventory {
                 ItemStack arrayItem = arrayIndex >= items.length ? null : items[arrayIndex];
                 net.minecraft.server.ItemStack item = ((arrayItem == null || arrayItem.getTypeId() == 0) ? null : CraftItemStack.asNMSCopy(arrayItem));
 
-                inventory.setItem(index, item);
+                inventory.getContents()[index] = item;
             }
             inventoryOffset += inventory.getSize();
         }
@@ -118,9 +118,10 @@ public class CraftInventory implements Inventory {
                 index -= inventory.getSize();
             } else {
                 inventory.setItem(index, ((item == null || item.getTypeId() == 0) ? null : CraftItemStack.asNMSCopy(item)));
+                return;
             }
         }
-        throw new IllegalStateException("Unable to retrieve an ItemStack for slot " + index);
+        throw new IllegalStateException("Unable to set an ItemStack at slot " + index);
     }
 
     public boolean contains(int materialId) {
