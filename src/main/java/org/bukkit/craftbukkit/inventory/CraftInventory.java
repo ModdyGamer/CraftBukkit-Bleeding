@@ -91,6 +91,9 @@ public class CraftInventory implements Inventory {
     }
 
     public void setContents(ItemStack[] items) {
+        if (items == null) {
+            items = new ItemStack[0];
+        }
         Validate.isTrue(items.length < getSize(), "Invalid inventory size; expected "+getSize()+" or less.");
 
         int inventoryOffset = 0;
