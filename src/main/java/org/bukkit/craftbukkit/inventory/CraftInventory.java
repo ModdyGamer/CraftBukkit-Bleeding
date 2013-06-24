@@ -91,20 +91,6 @@ public class CraftInventory implements Inventory {
     }
 
     public void setContents(ItemStack[] items) {
-        if (getPrimaryInventory().getContents().length < items.length) {
-            throw new IllegalArgumentException("Invalid inventory size; expected " + getPrimaryInventory().getContents().length + " or less");
-        }
-
-        net.minecraft.server.ItemStack[] mcItems = getPrimaryInventory().getContents();
-
-        for (int i = 0; i < mcItems.length; i++) {
-            if (i >= items.length) {
-                mcItems[i] = null;
-            } else {
-                mcItems[i] = CraftItemStack.asNMSCopy(items[i]);
-            }
-        }
-        // Rewrite
         Validate.isTrue(items.length < getSize(), "Invalid inventory size; expected "+getSize()+" or less.");
 
         int inventoryOffset = 0;
