@@ -1,5 +1,6 @@
 package org.bukkit.craftbukkit.inventory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
@@ -28,7 +29,7 @@ import org.bukkit.Material;
 
 public class CraftInventory implements Inventory {
     protected final IInventory primaryInventory;
-    private IInventory[] inventories;
+    private final IInventory[] inventories;
     private final int size;
 
     public CraftInventory(int primary, IInventory... inventories) {
@@ -509,5 +510,20 @@ public class CraftInventory implements Inventory {
 
     public void setMaxStackSize(int size) {
         primaryInventory.setMaxStackSize(size);
+    }
+
+    @Override
+    public int hashCode() {
+        return getPrimaryInventory().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof CraftInventory)) {
+            return false;
+        }
+        CraftInventory other = (CraftInventory) obj;
+
+        return Arrays.equals(this.inventories, other.inventories);
     }
 }
