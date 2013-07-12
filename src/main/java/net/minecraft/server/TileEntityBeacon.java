@@ -27,8 +27,16 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
     // CraftBukkit start
     public List<HumanEntity> transaction = new ArrayList<HumanEntity>();
     private int maxStack = MAX_STACK;
+
+    public static final int OVERRIDE_OFF = -1;
+    public static final int OVERRIDE_DEFAULT = 0;
+    public static final int OVERRIDE_ON = 1;
+    public int activationOverride = 0;
+
     public boolean customEffects = false;
     public List<MobEffect> effects;
+
+    public double radiusOverride = -1;
 
     public ItemStack[] getContents() {
         return new ItemStack[] { this.inventorySlot };
@@ -51,7 +59,13 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
     }
 
     public boolean isEnabled() {
-        if (this.d && this.e > 0) {
+        if (activationOverride == OVERRIDE_OFF) {
+            return false;
+        } else if (activationOverride == OVERRIDE_ON || this.d && this.e > 0) {
+            if (getRadius() == 0) {
+                return false;
+            }
+
             updateEffects();
             return !effects.isEmpty();
         }
@@ -64,7 +78,11 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
         }
     }
 
-    private List<MobEffect> getDefaultEffects(int pyramid, int primary, int secondary) {
+    public List<MobEffect> getDefaultEffects() {
+        return getDefaultEffects(this.e, this.f, this.g);
+    }
+
+    private static List<MobEffect> getDefaultEffects(int pyramid, int primary, int secondary) {
         if (pyramid <= 0 || primary <= 0) {
             return ImmutableList.of();
         } else if (pyramid >= 4 && primary == secondary) {
@@ -74,6 +92,12 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
         } else {
             return ImmutableList.of(new MobEffect(primary, 180, 0, true));
         }
+    }
+
+    public double getRadius() {
+        if (radiusOverride >= 0) return radiusOverride;
+        // Cap at 50 due to countPyramid() modifying e
+        return this.e >= 4 ? 50D : (double) (this.e * 10 + 10);
     }
     // CraftBukkit end
 
@@ -92,9 +116,7 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
             return;
         }
         if (isEnabled()) {
-            // [Update Team] update CraftBeacon.getRadius() if this formula is modified
-            // Cap at 50 due to countPyramid() modifying e
-            double d0 = this.e >= 4 ? 50D : (double) (this.e * 10 + 10);
+            double d0 = getRadius();
             // CraftBukkit end
 
             AxisAlignedBB axisalignedbb = AxisAlignedBB.a().a((double) this.x, (double) this.y, (double) this.z, (double) (this.x + 1), (double) (this.y + 1), (double) (this.z + 1)).grow(d0, d0, d0);
@@ -122,15 +144,24 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
     }
 
     private void v() {
-        if (!canSeeSky()) {
+        // CraftBukkit - activation overrides
+        if (activationOverride == OVERRIDE_OFF) {
+            this.d = false;
+            this.e = 0;
+            return;
+        } else if (activationOverride == OVERRIDE_ON) {
+            this.d = true;
+            this.e = countPyramid(4);
+            return;
+        }
+        if (!canSeeSky()) { // split method
             // CraftBukkit end
             this.d = false;
             this.e = 0;
         } else {
             this.d = true;
 
-            // CraftBukkit - split into method
-            countPyramid(4);
+            countPyramid(4); // CraftBukkit - split method
 
             if (this.e == 0) {
                 this.d = false;
@@ -198,7 +229,6 @@ public class TileEntityBeacon extends TileEntity implements IInventory {
                 customEffects = false;
                 updateEffects();
             } else {
-                // TODO if given effects are possible, set pri/sec to those
                 customEffects = true;
                 effects = CraftPotionBrewer.bukkitToNmsEffects(event.getNewEffects());
             }
