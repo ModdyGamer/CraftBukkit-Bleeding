@@ -1390,7 +1390,6 @@ public abstract class Entity {
     public void setPassengerOf(Entity entity) {
         // b(null) doesn't really fly for overloaded methods,
         // so this method is needed
-
         PluginManager pluginManager = Bukkit.getPluginManager();
         this.getBukkitEntity(); // make sure bukkitEntity is initialised
         // CraftBukkit end
@@ -1402,6 +1401,10 @@ public abstract class Entity {
                 if ((this.bukkitEntity instanceof LivingEntity) && (this.vehicle.getBukkitEntity() instanceof Vehicle)) {
                     VehicleExitEvent event = new VehicleExitEvent((Vehicle) this.vehicle.getBukkitEntity(), (LivingEntity) this.bukkitEntity);
                     pluginManager.callEvent(event);
+
+                    if (event.isCancelled()) {
+                        return;
+                    }
                 }
                 // CraftBukkit end
 
@@ -1413,10 +1416,27 @@ public abstract class Entity {
         } else {
             // CraftBukkit start
             if ((this.bukkitEntity instanceof LivingEntity) && (entity.getBukkitEntity() instanceof Vehicle) && entity.world.isChunkLoaded((int) entity.locX >> 4, (int) entity.locZ >> 4)) {
+                // It's possible to move from one vehicle to another.  We need to check if they're already in a vehicle, and fire an exit event if they are.
+                VehicleExitEvent exitEvent = null;
+                if (this.vehicle != null) {
+                    exitEvent = new VehicleExitEvent((Vehicle) this.vehicle.getBukkitEntity(), (LivingEntity) this.bukkitEntity);
+                    pluginManager.callEvent(exitEvent);
+
+                    if (exitEvent.isCancelled()) {
+                        return;
+                    }
+                }
+
                 VehicleEnterEvent event = new VehicleEnterEvent((Vehicle) entity.getBukkitEntity(), this.bukkitEntity);
                 pluginManager.callEvent(event);
 
                 if (event.isCancelled()) {
+                    // If we only cancelled the enterevent then we need to put the player in a decent position.
+                    if (this.vehicle != null && exitEvent != null) {
+                        this.setPositionRotation(this.vehicle.locX, this.vehicle.boundingBox.b + (double) this.vehicle.length, this.vehicle.locZ, this.yaw, this.pitch);
+                        this.vehicle.passenger = null;
+                        this.vehicle = null;
+                    }
                     return;
                 }
             }

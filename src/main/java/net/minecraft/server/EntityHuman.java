@@ -304,15 +304,24 @@ public abstract class EntityHuman extends EntityLiving implements ICommandListen
     public void setPassengerOf(Entity entity) {
         // CraftBukkit end
         if (this.vehicle != null && entity == null) {
+            // CraftBukkit start - use parent method instead to correctly fire VehicleExitEvent
+            Entity originalVehicle = this.vehicle;
+            // First statement moved down, second statement handled in parent method.
+            /*
             if (!this.world.isStatic) {
                 this.l(this.vehicle);
             }
-
             if (this.vehicle != null) {
                 this.vehicle.passenger = null;
             }
 
             this.vehicle = null;
+            */
+            super.setPassengerOf(entity);
+            if (!this.world.isStatic && this.vehicle == null) {
+                this.l(originalVehicle);
+            }
+            // CraftBukkit end
         } else {
             super.setPassengerOf(entity); // CraftBukkit - call new parent
         }
